@@ -1,0 +1,48 @@
+/**
+ * UI actions — call an IPC command and apply the returned state to the store.
+ * Keeping this in one module makes the data-flow easy to audit:
+ * UI event -> action -> Rust -> new AppState -> store -> re-render.
+ */
+import { api, type PreviewRequest } from "./ipc";
+import type { Location, LocationPreview, Prayer, Settings } from "./types";
+import { useAppStore } from "../store/useAppStore";
+
+function apply(s: Awaited<ReturnType<typeof api.getState>>): void {
+  useAppStore.getState().apply(s);
+}
+
+export async function saveLocation(
+  location: Location,
+  method: number,
+  school: number,
+): Promise<void> {
+  apply(await api.saveLocation(location, method, school));
+}
+
+export async function updateSettings(settings: Settings): Promise<void> {
+  apply(await api.updateSettings(settings));
+}
+
+export async function setPrayerDone(prayer: Prayer, done: boolean): Promise<void> {
+  apply(await api.setPrayerDone(prayer, done));
+}
+
+export async function alarmDone(): Promise<void> {
+  apply(await api.alarmDone());
+}
+
+export async function alarmSnooze(minutes: number): Promise<void> {
+  apply(await api.alarmSnooze(minutes));
+}
+
+export async function alarmDismiss(): Promise<void> {
+  apply(await api.alarmDismiss());
+}
+
+export function previewLocation(req: PreviewRequest): Promise<LocationPreview> {
+  return api.previewLocation(req);
+}
+
+export function testSound(): Promise<void> {
+  return api.testSound();
+}
