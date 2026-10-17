@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { MoonStar, RefreshCw, Settings, Sunrise } from "lucide-react";
+import { RefreshCw, Settings } from "lucide-react";
+import logo from "./assets/logo.png";
 import { TodayPage } from "./pages/TodayPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SetupWizard } from "./components/SetupWizard";
@@ -50,7 +51,7 @@ function Splash() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-slate-500">
-        <MoonStar className="h-8 w-8 animate-pulse text-emerald-500" />
+        <img src={logo} alt="" className="h-14 w-14 animate-pulse rounded-2xl" />
         <p className="text-sm">Loading…</p>
       </div>
     </div>
@@ -65,9 +66,7 @@ function MainLayout() {
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900/40 px-5 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-400">
-            <Sunrise className="h-5 w-5" />
-          </div>
+          <img src={logo} alt="Prayer Times" className="h-9 w-9 rounded-xl" />
           <div>
             <h1 className="text-sm font-semibold leading-tight">Prayer Times</h1>
             <p className="text-xs text-slate-500">

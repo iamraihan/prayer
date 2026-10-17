@@ -28,6 +28,8 @@ mod windows;
 
 use std::sync::{Arc, Condvar, Mutex};
 
+use tauri::Manager;
+
 /// Shared application state: the engine behind a mutex plus the condvar used
 /// to wake the engine thread immediately after settings changes.
 pub struct SharedEngine {

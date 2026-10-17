@@ -7,11 +7,13 @@
 //! Endpoint quirks handled here:
 //! - times may carry a suffix like " (+06)" or " (EET)" → stripped when parsing
 //! - `timingsByCity` returns placeholder coordinates, so lookups stay city-based
+//! - the envelope-level `meta` is null; the timezone lives in each day's
+//!   `data.meta.timezone`
 
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 
-use chrono::{NaiveDate, NaiveTime};
+use chrono::{Datelike, NaiveDate, NaiveTime};
 use serde::{Deserialize, Serialize};
 
 use crate::models::Prayer;
@@ -29,8 +31,6 @@ pub struct Envelope<D> {
     #[serde(default)]
     pub status: String,
     pub data: D,
-    #[serde(default)]
-    pub meta: Option<RawMeta>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -61,6 +61,10 @@ pub struct RawTimings {
 pub struct RawDay {
     pub timings: RawTimings,
     pub date: RawDate,
+    /// The API serves timezone (and method info) per day; the envelope-level
+    /// `meta` is null on current endpoints.
+    #[serde(default)]
+    pub meta: Option<RawMeta>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -202,7 +206,12 @@ pub fn fetch_month(
     Ok(MonthCache {
         year,
         month,
-        timezone: resp.meta.map(|m| m.timezone).unwrap_or_default(),
+        timezone: resp
+            .data
+            .first()
+            .and_then(|raw| raw.meta.as_ref())
+            .map(|m| m.timezone.clone())
+            .unwrap_or_default(),
         from_cache: false,
         days,
     })
@@ -234,7 +243,12 @@ pub fn fetch_day_by_city(
         .json()
         .map_err(|e| format!("bad response: {e}"))?;
 
-    let timezone = resp.meta.map(|m| m.timezone).unwrap_or_default();
+    let timezone = resp
+        .data
+        .meta
+        .as_ref()
+        .map(|m| m.timezone.clone())
+        .unwrap_or_default();
     let day = to_day(&resp.data).ok_or_else(|| "missing timings in response".to_string())?;
     Ok((day, timezone))
 }

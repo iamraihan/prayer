@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration as StdDuration, Instant};
 
-use chrono::{DateTime, Duration, NaiveDate, Utc};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc};
 use chrono_tz::Tz;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -232,7 +232,7 @@ impl Engine {
                 if engine.active_alarm.is_none() {
                     engine.sound.stop();
                 }
-            }
+            };
         });
     }
 
@@ -740,8 +740,9 @@ impl Engine {
             self.tray_done_label = done_label.clone();
 
             let app = self.app.clone();
+            let thread_app = app.clone();
             let _ = app.run_on_main_thread(move || {
-                tray::update(&app, &l1, &l2, &tooltip, done_enabled, &done_label);
+                tray::update(&thread_app, &l1, &l2, &tooltip, done_enabled, &done_label);
             });
         }
         if title != self.window_title {
@@ -883,7 +884,7 @@ pub fn run_loop(app: AppHandle, wake: Arc<(Mutex<bool>, Condvar)>) {
                     .wait_timeout(flag, StdDuration::from_secs(TICK_SECONDS))
                 {
                     Ok((mut guard, _)) => *guard = false,
-                    Err(poisoned) => *poisoned.into_inner() = false,
+                    Err(poisoned) => *poisoned.into_inner().0 = false,
                 }
             } else {
                 *flag = false;

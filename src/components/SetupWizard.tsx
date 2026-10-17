@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, MapPin, MoonStar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
+import logo from "../assets/logo.png";
 import { Button } from "./ui/Button";
 import { Card } from "./ui/Card";
 import { SelectField, TextField } from "./ui/fields";
@@ -88,9 +89,7 @@ export function SetupWizard({ onFinished }: SetupWizardProps) {
     <div className="flex h-full items-center justify-center p-6">
       <div className="w-full max-w-xl">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600/15 text-emerald-400">
-            <MoonStar className="h-7 w-7" />
-          </div>
+          <img src={logo} alt="Prayer Times" className="h-16 w-16 rounded-2xl" />
           <h1 className="text-2xl font-semibold">Welcome to Prayer Times</h1>
           <p className="text-sm text-slate-400">
             Set your location to get accurate prayer times and alarms.

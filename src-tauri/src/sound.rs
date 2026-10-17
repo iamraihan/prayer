@@ -1,47 +1,81 @@
 //! Alarm sound: a soft chime arpeggio synthesized at runtime (no audio asset
 //! needed) and looped via rodio until answered.
 
+use std::sync::mpsc;
+use std::thread;
+
 use rodio::{OutputStream, OutputStreamHandle, Sink, Source};
 use rodio::buffer::SamplesBuffer;
 
+enum Cmd {
+    Play(f32),
+    Stop,
+}
+
+/// Handle to a dedicated audio thread.
+///
+/// rodio's `OutputStream` is neither `Send` nor `Sync` (it wraps a cpal
+/// stream), so it cannot live inside the shared engine state. Instead, the
+/// stream and sink are owned by this background thread and driven by commands
+/// sent through the channel.
 pub struct Sound {
-    /// Must stay alive for playback to continue.
-    _stream: Option<OutputStream>,
-    handle: Option<OutputStreamHandle>,
-    sink: Option<Sink>,
+    tx: Option<mpsc::Sender<Cmd>>,
 }
 
 impl Sound {
     pub fn new() -> Self {
-        match OutputStream::try_default() {
-            Ok((stream, handle)) => Self {
-                _stream: Some(stream),
-                handle: Some(handle),
-                sink: None,
-            },
-            Err(_) => Self {
-                _stream: None,
-                handle: None,
-                sink: None,
-            },
+        let (tx, rx) = mpsc::channel();
+        let (ready_tx, ready_rx) = mpsc::channel();
+        thread::spawn(move || {
+            if let Ok((_stream, handle)) = OutputStream::try_default() {
+                let _ = ready_tx.send(true);
+                audio_loop(rx, &handle);
+            } else {
+                let _ = ready_tx.send(false);
+            }
+        });
+        // Wait for device setup to finish so a missing device is known now.
+        let ok = ready_rx.recv().unwrap_or(false);
+        Self {
+            tx: if ok { Some(tx) } else { None },
         }
     }
 
     /// Starts the chime loop, replacing any previous playback.
     pub fn play_loop(&mut self, volume: f32) {
-        self.stop();
-        let Some(handle) = &self.handle else { return };
-        if let Ok(sink) = Sink::try_new(handle) {
-            sink.set_volume(volume.clamp(0.0, 1.0));
-            let buffer = SamplesBuffer::new(44_100, 1, chime());
-            sink.append(buffer.repeat_infinite());
-            self.sink = Some(sink);
+        if let Some(tx) = &self.tx {
+            let _ = tx.send(Cmd::Play(volume));
         }
     }
 
     pub fn stop(&mut self) {
-        if let Some(sink) = self.sink.take() {
-            sink.stop();
+        if let Some(tx) = &self.tx {
+            let _ = tx.send(Cmd::Stop);
+        }
+    }
+}
+
+/// Runs on the audio thread until the last `Sender` is dropped.
+fn audio_loop(rx: mpsc::Receiver<Cmd>, handle: &OutputStreamHandle) {
+    let mut sink: Option<Sink> = None;
+    for cmd in rx {
+        match cmd {
+            Cmd::Play(volume) => {
+                if let Some(old) = sink.take() {
+                    old.stop();
+                }
+                if let Ok(new) = Sink::try_new(handle) {
+                    new.set_volume(volume.clamp(0.0, 1.0));
+                    let buffer = SamplesBuffer::new(44_100, 1, chime());
+                    new.append(buffer.repeat_infinite());
+                    sink = Some(new);
+                }
+            }
+            Cmd::Stop => {
+                if let Some(old) = sink.take() {
+                    old.stop();
+                }
+            }
         }
     }
 }

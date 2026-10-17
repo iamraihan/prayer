@@ -43,8 +43,13 @@ pub async fn preview_location(req: PreviewRequest) -> Result<LocationPreviewDto,
         // differs (timezone offset), re-ask for the correct day.
         let guess = Utc::now().date_naive();
         let (day, tz_name) = aladhan::fetch_day_by_city(&client, &params, guess)?;
-        let tz = timeutil::parse_tz(&tz_name)
-            .ok_or_else(|| format!("API returned unknown timezone: {tz_name}"))?;
+        let tz = timeutil::parse_tz(&tz_name).ok_or_else(|| {
+            if tz_name.is_empty() {
+                "API response did not include a timezone for this city".to_string()
+            } else {
+                format!("API returned unknown timezone: {tz_name}")
+            }
+        })?;
         let city_today = Utc::now().with_timezone(&tz).date_naive();
         let day = if city_today != guess {
             aladhan::fetch_day_by_city(&client, &params, city_today)?.0
