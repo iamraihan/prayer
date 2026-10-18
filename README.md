@@ -85,13 +85,71 @@ xcode-select --install
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-### Run / build
+### Run in dev mode
 
 ```bash
-pnpm install
-pnpm tauri dev     # dev mode with hot reload
-pnpm tauri build   # production bundles (MSI/NSIS, dmg, deb/AppImage)
+pnpm install      # once, after cloning / pulling new dependencies
+pnpm tauri dev
 ```
+
+What happens and what to expect:
+
+- Vite starts on `http://localhost:1420` and Cargo compiles the Rust backend
+  in **debug** mode, then the app window opens.
+- The **first** `pnpm tauri dev` (or the first after dependency changes)
+  compiles everything — allow 5–10 minutes. After that, startup is seconds.
+- **Frontend changes** (TS/TSX/CSS) hot-reload instantly in the open window.
+- **Rust changes** (`src-tauri/src/**`) recompile and restart the app
+  automatically (~1–2 minutes).
+- Stop it with `Ctrl+C` in the terminal. The tray icon and background
+  scheduler only run while dev mode is running.
+- Debug builds include devtools: right-click in the app → *Inspect Element*
+  for the web console (frontend errors, IPC failures).
+- `pnpm dev` (frontend only, in a browser) does **not** work — the app calls
+  Tauri IPC commands that only exist inside the desktop shell.
+
+Fast feedback while coding Rust (no window, much quicker than a full build):
+
+```bash
+cd src-tauri
+cargo check        # type-check the backend in seconds
+```
+
+### Building a release
+
+```bash
+pnpm tauri build
+```
+
+This compiles the frontend, builds Rust in **release** mode (optimized,
+slower — allow ~10–15 minutes on a cold cache, ~2–3 minutes incremental) and
+produces the installers for the OS you run it on:
+
+| Platform | Standalone app | Installers |
+| -------- | -------------- | ---------- |
+| Windows  | `…\release\prayer-times.exe` | `bundle\nsis\Prayer Times_x.y.z_x64-setup.exe`, `bundle\msi\Prayer Times_x.y.z_x64_en-US.msi` |
+| macOS    | `…/release/bundle/macos/Prayer Times.app` | `bundle/dmg/Prayer Times_x.y.z_aarch64.dmg` |
+| Linux    | `…/release/prayer-times` | `bundle/deb/…_amd64.deb`, `bundle/appimage/….AppImage`, `bundle/rpm/…` |
+
+Notes:
+
+- **Output location**: by default everything lands in `src-tauri/target/`.
+  On this machine `.cargo/config.toml` redirects it to
+  `E:\cargo-target\prayer\` to protect the nearly-full C: drive — don't
+  delete that file.
+- Build only one installer type to save time:
+  `pnpm tauri build --bundles nsis` (or `msi`, `dmg`, `deb`, `appimage`).
+- **Releasing a new version**: bump `version` in **all three** places —
+  `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json` —
+  then build.
+- **Custom app icon** (replaces the placeholder):
+  `pnpm tauri icon path/to/icon.png` regenerates all sizes in
+  `src-tauri/icons/`, then rebuild.
+- You must build **on** each target OS (Windows exe on Windows, dmg on macOS,
+  deb/AppImage on Linux). For automatic multi-platform builds from one
+  checkout, use the official
+  [tauri-action](https://github.com/tauri-apps/tauri-action) GitHub Actions
+  workflow later.
 
 ## Notes
 

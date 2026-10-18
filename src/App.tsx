@@ -14,6 +14,9 @@ export default function App() {
   const initError = useAppStore((s) => s.initError);
   const retry = useAppStore((s) => s.retry);
   const hasLocation = useAppStore((s) => s.state?.hasLocation ?? false);
+  // First run: after the wizard completes, land on Settings so alarm tone /
+  // reminders can be configured before anything else.
+  const [justSetup, setJustSetup] = useState(false);
 
   useEffect(() => {
     startClock();
@@ -41,10 +44,10 @@ export default function App() {
   }
 
   if (!hasLocation) {
-    return <SetupWizard />;
+    return <SetupWizard onFinished={() => setJustSetup(true)} />;
   }
 
-  return <MainLayout />;
+  return <MainLayout initialTab={justSetup ? "settings" : "today"} />;
 }
 
 function Splash() {
@@ -58,8 +61,8 @@ function Splash() {
   );
 }
 
-function MainLayout() {
-  const [tab, setTab] = useState<Tab>("today");
+function MainLayout({ initialTab = "today" }: { initialTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const location = useAppStore((s) => s.state?.settings.location ?? null);
 
   return (
