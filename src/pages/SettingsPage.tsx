@@ -8,8 +8,10 @@ import { NumberField, SelectField, SliderField } from "../components/ui/fields";
 import { SetupWizard } from "../components/SetupWizard";
 import { useAppState } from "../store/useAppStore";
 import {
+  getAutostart,
   resetAlarmTone,
   setAlarmTone,
+  setAutostart as setAutostartCmd,
   testSound,
   updateSettings,
 } from "../lib/actions";
@@ -29,6 +31,22 @@ export function SettingsPage() {
   const [changingLocation, setChangingLocation] = useState(false);
   const [toneBusy, setToneBusy] = useState(false);
   const [toneError, setToneError] = useState<string | null>(null);
+  const [autostart, setAutostart] = useState(false);
+
+  useEffect(() => {
+    void getAutostart().then(setAutostart).catch(() => undefined);
+  }, []);
+
+  // Applies instantly via the OS launcher entry; reverts on failure.
+  async function toggleAutostart(enabled: boolean) {
+    setAutostart(enabled);
+    try {
+      setAutostart(await setAutostartCmd(enabled));
+    } catch (e) {
+      setAutostart(!enabled);
+      setToneError(String(e));
+    }
+  }
 
   // Re-seed the draft whenever the backend pushes a different settings object
   // while the draft is unchanged (e.g. after location change).
@@ -122,6 +140,18 @@ export function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      <Card
+        title="General"
+        description="App behaviour on system startup (applies instantly)."
+      >
+        <Row label="Start with Windows" hint="Runs quietly in the tray at login">
+          <Toggle
+            checked={autostart}
+            onChange={(v) => void toggleAutostart(v)}
+          />
+        </Row>
+      </Card>
 
       <Card title="Location" description="Prayer times and the timezone are resolved from your city.">
         <div className="flex flex-wrap items-center justify-between gap-3">

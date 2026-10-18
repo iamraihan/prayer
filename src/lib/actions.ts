@@ -55,3 +55,11 @@ export async function setAlarmTone(path: string): Promise<void> {
 export async function resetAlarmTone(): Promise<void> {
   apply(await api.resetAlarmTone());
 }
+
+export function getAutostart(): Promise<boolean> {
+  return api.getAutostart();
+}
+
+export function setAutostart(enabled: boolean): Promise<boolean> {
+  return api.setAutostart(enabled);
+}

@@ -174,21 +174,16 @@ impl Engine {
 
     pub fn apply_settings(&mut self, mut settings: Settings) {
         settings = settings.normalized();
+        // The alarm tone is owned by set_alarm_tone/reset_alarm_tone (they
+        // apply instantly); ignore whatever value a settings draft carries,
+        // otherwise "Save changes" would reset a just-picked tone to default.
+        settings.alarm_sound = self.settings.alarm_sound.clone();
         let calc_changed =
             settings.method != self.settings.method || settings.school != self.settings.school;
         let loc_changed = location_key(&settings) != location_key(&self.settings);
-        let tone_changed = settings.alarm_sound != self.settings.alarm_sound;
         self.settings = settings;
         if calc_changed || loc_changed {
             self.reset_schedule();
-        }
-        if tone_changed {
-            let tone = self
-                .settings
-                .alarm_sound
-                .as_ref()
-                .map(|name| self.cache_dir.join(name));
-            self.sound.load(tone);
         }
         let _ = settings_io::save(&self.app, &self.settings);
         self.dirty = true;

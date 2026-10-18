@@ -44,6 +44,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
+        // Boot launches pass --hidden so the app starts silently in the tray.
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hidden"]),
+        ))
         .on_window_event(|window, event| {
             // Closing the main window hides it — the app keeps running in the
             // tray so alarms still fire. Quit via the tray menu.
@@ -72,6 +77,13 @@ pub fn run() {
                 tray::build(&handle)?;
                 alarm::ensure_window(&handle);
 
+                // The main window is created hidden (see tauri.conf.json) to
+                // avoid a flash on boot launches; show it on normal starts.
+                let hidden_launch = std::env::args().any(|arg| arg == "--hidden");
+                if !hidden_launch {
+                    windows::show_main(&handle);
+                }
+
                 std::thread::spawn(move || engine::run_loop(handle, wake));
                 Ok(())
             }
@@ -88,6 +100,8 @@ pub fn run() {
             commands::test_sound,
             commands::set_alarm_tone,
             commands::reset_alarm_tone,
+            commands::get_autostart,
+            commands::set_autostart,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

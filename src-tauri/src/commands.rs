@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use chrono::Utc;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::aladhan;
 use crate::engine::{self, Engine};
@@ -189,4 +189,24 @@ pub fn reset_alarm_tone(shared: State<'_, SharedEngine>) -> AppStateDto {
         engine.tick();
         engine.snapshot()
     })
+}
+
+// -- autostart (Start with Windows / launch at login) -----------------------
+
+#[tauri::command]
+pub fn get_autostart(app: AppHandle) -> bool {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let autolaunch = app.autolaunch();
+    if enabled {
+        autolaunch.enable().map_err(|e| e.to_string())?;
+    } else {
+        autolaunch.disable().map_err(|e| e.to_string())?;
+    }
+    Ok(autolaunch.is_enabled().unwrap_or(enabled))
 }

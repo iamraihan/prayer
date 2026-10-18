@@ -45,4 +45,9 @@ export const api = {
     invoke("set_alarm_tone", { path }),
 
   resetAlarmTone: (): Promise<AppState> => invoke("reset_alarm_tone"),
+
+  getAutostart: (): Promise<boolean> => invoke("get_autostart"),
+
+  setAutostart: (enabled: boolean): Promise<boolean> =>
+    invoke("set_autostart", { enabled }),
 };
