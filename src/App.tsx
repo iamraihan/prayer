@@ -4,7 +4,9 @@ import logo from "./assets/logo.png";
 import { TodayPage } from "./pages/TodayPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SetupWizard } from "./components/SetupWizard";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { startClock, useAppStore } from "./store/useAppStore";
+import { useUpdateStore } from "./store/useUpdateStore";
 import { cn } from "./lib/cn";
 
 type Tab = "today" | "settings";
@@ -21,6 +23,7 @@ export default function App() {
   useEffect(() => {
     startClock();
     void useAppStore.getState().init();
+    void useUpdateStore.getState().init();
   }, []);
 
   if (!ready) {
@@ -86,6 +89,8 @@ function MainLayout({ initialTab = "today" }: { initialTab?: Tab }) {
           </TabButton>
         </nav>
       </header>
+
+      <UpdateBanner />
 
       <main className="flex-1 overflow-y-auto px-5 py-5">
         <div className="mx-auto max-w-2xl">

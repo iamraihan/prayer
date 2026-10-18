@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ExternalLink, FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
+import { Download, ExternalLink, FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "../components/ui/Button";
@@ -8,6 +8,7 @@ import { Toggle } from "../components/ui/Toggle";
 import { NumberField, SelectField, SliderField } from "../components/ui/fields";
 import { SetupWizard } from "../components/SetupWizard";
 import { useAppState } from "../store/useAppStore";
+import { IS_MAC, useUpdateStore } from "../store/useUpdateStore";
 import {
   getAutostart,
   resetAlarmTone,
@@ -34,6 +35,7 @@ export function SettingsPage() {
   const [toneBusy, setToneBusy] = useState(false);
   const [toneError, setToneError] = useState<string | null>(null);
   const [autostart, setAutostart] = useState(false);
+  const updates = useUpdateStore();
 
   useEffect(() => {
     void getAutostart().then(setAutostart).catch(() => undefined);
@@ -378,6 +380,76 @@ export function SettingsPage() {
             );
           })}
         </ul>
+      </Card>
+
+      <Card
+        title="Updates"
+        description="Checked automatically at launch. Windows and Linux updates install inside the app; macOS downloads from GitHub."
+      >
+        <div className="space-y-4">
+          <Row
+            label="Current version"
+            hint={updates.currentVersion ? `v${updates.currentVersion}` : undefined}
+          >
+            <Button
+              size="sm"
+              disabled={updates.phase === "checking" || updates.phase === "downloading"}
+              onClick={() => void updates.checkForUpdates(false)}
+            >
+              <RotateCcw
+                className={cn(
+                  "h-3.5 w-3.5",
+                  updates.phase === "checking" && "animate-spin",
+                )}
+              />
+              {updates.phase === "checking" ? "Checking…" : "Check for updates"}
+            </Button>
+          </Row>
+
+          {updates.phase === "available" && (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-300">
+                <span className="font-medium text-emerald-300">v{updates.newVersion}</span> is
+                available
+                {updates.currentVersion ? ` (you have v${updates.currentVersion})` : ""}.
+              </p>
+              {updates.notes && (
+                <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-xs leading-relaxed text-slate-400">
+                  {updates.notes}
+                </pre>
+              )}
+              {IS_MAC ? (
+                <Button size="sm" variant="primary" onClick={updates.openDownloadPage}>
+                  <ExternalLink className="h-3.5 w-3.5" /> Download from GitHub
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => void updates.install()}
+                >
+                  <Download className="h-3.5 w-3.5" /> Install update
+                </Button>
+              )}
+            </div>
+          )}
+
+          {updates.phase === "downloading" && (
+            <p className="text-sm text-slate-300">
+              Downloading update… the app restarts automatically when ready.
+            </p>
+          )}
+
+          {updates.phase === "up-to-date" && (
+            <p className="text-sm text-slate-400">You're on the latest version.</p>
+          )}
+
+          {updates.phase === "error" && (
+            <p className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-xs text-red-300">
+              {updates.error}
+            </p>
+          )}
+        </div>
       </Card>
 
       <Card title="About">
