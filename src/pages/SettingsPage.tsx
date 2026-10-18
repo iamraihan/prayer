@@ -16,7 +16,8 @@ import {
   updateSettings,
 } from "../lib/actions";
 import { METHODS } from "../lib/methods";
-import { PRAYERS, PRAYER_LABELS, type Settings } from "../lib/types";
+import { PRAYERS, PRAYER_LABELS, type Prayer, type Settings } from "../lib/types";
+import { fmtClock } from "../lib/time";
 import { cn } from "../lib/cn";
 
 /**
@@ -46,6 +47,18 @@ export function SettingsPage() {
       setAutostart(!enabled);
       setToneError(String(e));
     }
+  }
+
+  // "Alarm at 12:16 PM" — today's start time + the draft's delay minutes.
+  function reminderHint(prayer: Prayer): string | null {
+    const mins = draft?.prayerSettings[prayer]?.reminderMinutes;
+    const start = state?.today?.timings.find((t) => t.prayer === prayer)?.start;
+    if (!start) return null;
+    const [h, m] = start.split(":").map(Number);
+    const d = new Date();
+    d.setHours(h, (m ?? 0) + (mins ?? 0), 0, 0);
+    const mode = draft?.timeFormat === "24h" ? "24h" : "12h";
+    return `Alarm at ${fmtClock(d, mode)}`;
   }
 
   // Re-seed the draft whenever the backend pushes a different settings object
@@ -306,8 +319,8 @@ export function SettingsPage() {
       </Card>
 
       <Card
-        title="Per-prayer reminders"
-        description="A follow-up alarm N minutes after the prayer starts (“you still have … minutes”). Maghrib is off by default because its window is short. Clear the number to disable it for a prayer."
+        title="Per-prayer alarm timing"
+        description="How many minutes AFTER the prayer's start time its alarm fires — e.g. start 11:46 AM with 30 → one single alarm at 12:16 PM (“you still have … minutes”). Clear the number to make the alarm ring exactly at the start time (that's Maghrib's default). The before-end warning below is separate."
       >
         <ul className="divide-y divide-slate-800/70">
           {PRAYERS.map((p) => {
@@ -327,7 +340,9 @@ export function SettingsPage() {
                     {PRAYER_LABELS[p]}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {ps.enabled ? "Alarms on" : "All alarms off"}
+                    {ps.enabled
+                      ? (reminderHint(p) ?? "Alarms on")
+                      : "All alarms off"}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -350,7 +365,7 @@ export function SettingsPage() {
                         "h-9 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 text-sm text-slate-100",
                         "placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none disabled:opacity-40",
                       )}
-                      aria-label={`Reminder minutes for ${p}`}
+                      aria-label={`Reminder minutes after ${PRAYER_LABELS[p]} starts`}
                     />
                   </div>
                   <Toggle

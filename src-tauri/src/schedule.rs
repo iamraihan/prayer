@@ -10,8 +10,9 @@ use crate::timeutil;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EventKind {
+    /// The prayer's main alarm.
     Start,
-    Reminder,
+    /// Final warning before the window closes.
     PreEnd,
 }
 
@@ -19,7 +20,6 @@ impl EventKind {
     pub fn id(self) -> &'static str {
         match self {
             EventKind::Start => "start",
-            EventKind::Reminder => "reminder",
             EventKind::PreEnd => "preEnd",
         }
     }
@@ -28,6 +28,10 @@ impl EventKind {
 #[derive(Debug, Clone)]
 pub struct PlannedEvent {
     pub kind: EventKind,
+    /// True when the main alarm is delayed past the start time
+    /// (reminder_minutes set) — the engine uses the "you still have …"
+    /// message for it.
+    pub delayed: bool,
     pub prayer: Prayer,
     /// When this event fires.
     pub at: DateTime<Tz>,
@@ -77,29 +81,36 @@ pub fn compute(day: &DayTimings, tz: Tz, settings: &Settings) -> Vec<PlannedEven
             continue;
         }
 
+        // Main alarm: exactly at the start time, or delayed N minutes after
+        // it when a value is set ("you still have … minutes"). The delay is
+        // clamped so the alarm never lands in the last 5 minutes of the
+        // window (that's the before-end warning's job).
+        let delay = ps.and_then(|p| p.reminder_minutes);
+        let (at, delayed) = match delay {
+            Some(mins) => {
+                let target = start
+                    .checked_add_signed(Duration::minutes(mins as i64))
+                    .unwrap_or(start);
+                let latest = end
+                    .checked_sub_signed(Duration::minutes(5))
+                    .unwrap_or(start);
+                let at = if latest > start {
+                    target.min(latest)
+                } else {
+                    start
+                };
+                (at, at > start)
+            }
+            None => (start, false),
+        };
         events.push(PlannedEvent {
             kind: EventKind::Start,
+            delayed,
             prayer,
-            at: start,
+            at,
             start,
             end,
         });
-
-        // Mid-window reminder ("you still have N minutes"), default 30 min
-        // after start; only when it leaves a meaningful remainder of window.
-        if let Some(mins) = ps.and_then(|p| p.reminder_minutes) {
-            if let Some(at) = start.checked_add_signed(Duration::minutes(mins as i64)) {
-                if end - at > Duration::minutes(5) {
-                    events.push(PlannedEvent {
-                        kind: EventKind::Reminder,
-                        prayer,
-                        at,
-                        start,
-                        end,
-                    });
-                }
-            }
-        }
 
         // Final warning shortly before the window closes ("you will miss it").
         if settings.pre_end_warning_enabled && settings.pre_end_warning_minutes > 0 {
@@ -109,6 +120,7 @@ pub fn compute(day: &DayTimings, tz: Tz, settings: &Settings) -> Vec<PlannedEven
                 if at > start + Duration::minutes(2) {
                     events.push(PlannedEvent {
                         kind: EventKind::PreEnd,
+                        delayed: false,
                         prayer,
                         at,
                         start,

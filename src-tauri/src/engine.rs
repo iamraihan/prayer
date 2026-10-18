@@ -58,7 +58,6 @@ impl From<EventKind> for AlarmKind {
     fn from(kind: EventKind) -> Self {
         match kind {
             EventKind::Start => AlarmKind::Start,
-            EventKind::Reminder => AlarmKind::Reminder,
             EventKind::PreEnd => AlarmKind::PreEnd,
         }
     }
@@ -69,6 +68,8 @@ pub struct ActiveAlarmState {
     pub prayer: Prayer,
     pub kind: AlarmKind,
     pub fired_at: DateTime<Utc>,
+    /// Prayer-window end, for the popup's live "ends in" countdown.
+    pub ends_at: DateTime<Tz>,
     pub message: AlarmMessageDto,
 }
 
@@ -320,11 +321,17 @@ impl Engine {
             today: today_dto,
             next: next_dto,
             done_today: self.done.iter().map(|(prayer, _)| (*prayer, true)).collect(),
+            snoozes: self
+                .snoozes
+                .iter()
+                .map(|(prayer, at)| (*prayer, at.to_rfc3339()))
+                .collect(),
             active_alarm: self.active_alarm.as_ref().map(|a| ActiveAlarmDto {
                 id: a.id.clone(),
                 prayer: a.prayer,
                 kind: a.kind.id().to_string(),
                 started_at: a.fired_at.to_rfc3339(),
+                ends_at: a.ends_at.to_rfc3339(),
                 message: a.message.clone(),
             }),
             api_error: self.last_error.clone(),
@@ -478,14 +485,14 @@ impl Engine {
                 let age = now - event.at;
                 if age <= Duration::seconds(GRACE_SECS) {
                     if !self.fired.contains(&id) {
-                        self.fire(
-                            event.prayer,
-                            AlarmKind::from(event.kind),
-                            event.start,
-                            event.end,
-                            now,
-                            id,
-                        );
+                        // A delayed main alarm speaks the "you still have …"
+                        // message, otherwise "it's time to pray".
+                        let kind = if event.kind == EventKind::Start && event.delayed {
+                            AlarmKind::Reminder
+                        } else {
+                            AlarmKind::from(event.kind)
+                        };
+                        self.fire(event.prayer, kind, event.start, event.end, now, id);
                     }
                 } else {
                     // Missed for too long (app closed / asleep): skip silently.
@@ -537,6 +544,7 @@ impl Engine {
             prayer,
             kind,
             fired_at: Utc::now(),
+            ends_at: end,
             message: message.clone(),
         });
 

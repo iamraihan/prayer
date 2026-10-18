@@ -4,11 +4,15 @@ import { NextPrayerCard } from "../components/NextPrayerCard";
 import { PrayerList } from "../components/PrayerList";
 import { AlarmBanner } from "../components/AlarmBanner";
 import { methodName } from "../lib/methods";
+import { PRAYER_LABELS, type Prayer } from "../lib/types";
+import { fmtClock } from "../lib/time";
 
 export function TodayPage() {
   const state = useAppState();
   const today = state?.today;
   const location = state?.settings.location;
+  const mode = state?.settings.timeFormat === "24h" ? "24h" : "12h";
+  const snoozes = Object.entries(state?.snoozes ?? {}) as [Prayer, string][];
 
   return (
     <div className="space-y-5">
@@ -39,6 +43,20 @@ export function TodayPage() {
           )}
         </div>
       </header>
+
+      {snoozes.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {snoozes.map(([prayer, at]) => (
+            <span
+              key={prayer}
+              className="rounded-full border border-amber-800/60 bg-amber-950/30 px-3 py-1 text-xs text-amber-300"
+              title={`Snoozed — the alarm popup will show again at this time`}
+            >
+              🔔 {PRAYER_LABELS[prayer]} reminder at {fmtClock(at, mode)}
+            </span>
+          ))}
+        </div>
+      )}
 
       <AlarmBanner />
       <NextPrayerCard />

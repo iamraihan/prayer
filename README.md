@@ -19,8 +19,7 @@ For each prayer (Fajr, Dhuhr, Asr, Maghrib, Isha) the scheduler plans:
 
 | Alarm        | When it fires                                              | Default |
 | ------------ | ---------------------------------------------------------- | ------- |
-| Start        | exactly at the prayer's start time                         | on      |
-| Reminder     | N minutes after start — "you still have N minutes"          | +30 min (off for Maghrib — short window) |
+| Main         | at the prayer's start time — or N minutes after it when a per-prayer delay is set ("you still have N minutes") | +30 min delay (Maghrib: exactly at start) |
 | Before-end   | N minutes before the window closes — "you will miss it"     | 10 min  |
 | Snooze       | when a "Remind me again in N minutes" answer is due         | user-set minutes |
 

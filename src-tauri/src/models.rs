@@ -65,8 +65,8 @@ pub struct Location {
 #[serde(rename_all = "camelCase")]
 pub struct PrayerSettings {
     pub enabled: bool,
-    /// Minutes after the prayer starts for the mid-window reminder.
-    /// `None` disables the reminder (default for Maghrib).
+    /// Minutes to delay the prayer's main alarm after its start time.
+    /// `None` = alarm exactly at the start time (default for Maghrib).
     pub reminder_minutes: Option<u32>,
 }
 
@@ -183,6 +183,8 @@ pub struct ActiveAlarmDto {
     /// "start" | "reminder" | "preEnd" | "snooze"
     pub kind: String,
     pub started_at: String,
+    /// End of the prayer window (for the popup's live countdown).
+    pub ends_at: String,
     pub message: AlarmMessageDto,
 }
 
@@ -202,6 +204,8 @@ pub struct AppStateDto {
     pub today: Option<DayTimingsDto>,
     pub next: Option<NextPrayerDto>,
     pub done_today: HashMap<Prayer, bool>,
+    /// Pending snoozed reminders: prayer -> due instant (RFC3339).
+    pub snoozes: HashMap<Prayer, String>,
     pub active_alarm: Option<ActiveAlarmDto>,
     pub api_error: Option<String>,
 }

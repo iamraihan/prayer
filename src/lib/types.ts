@@ -31,9 +31,9 @@ export interface Location {
 }
 
 export interface PrayerReminderSettings {
-  /** Master switch for this prayer's alarms (start / reminder / pre-end). */
+  /** Master switch for this prayer's alarms (main / pre-end). */
   enabled: boolean;
-  /** Minutes after start for the "you still have N minutes" reminder. `null` disables it (default for Maghrib). */
+  /** Delay the main alarm N minutes after the prayer's start time; null = alarm exactly at start (Maghrib default). */
   reminderMinutes: number | null;
 }
 
@@ -87,6 +87,8 @@ export interface ActiveAlarm {
   prayer: Prayer;
   kind: AlarmKind;
   startedAt: string;
+  /** Prayer-window end (ISO) — for the popup's live countdown. */
+  endsAt: string;
   message: AlarmMessage;
 }
 
@@ -102,6 +104,8 @@ export interface AppState {
   today: DayTimings | null;
   next: NextPrayerInfo | null;
   doneToday: Partial<Record<Prayer, true>>;
+  /** Pending snoozed reminders: prayer -> due instant (ISO). */
+  snoozes: Partial<Record<Prayer, string>>;
   activeAlarm: ActiveAlarm | null;
   apiError: string | null;
 }
