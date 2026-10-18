@@ -138,6 +138,14 @@ impl Engine {
             }
         }
 
+        let mut sound = Sound::new();
+        let custom_tone = settings
+            .alarm_sound
+            .as_ref()
+            .map(|name| cache_dir.join(name))
+            .filter(|path| path.is_file());
+        sound.load(custom_tone);
+
         Ok(Engine {
             app,
             client,
@@ -151,7 +159,7 @@ impl Engine {
             done,
             active_alarm: None,
             last_error: None,
-            sound: Sound::new(),
+            sound,
             dirty: false,
             tray_l1: String::new(),
             tray_l2: String::new(),
@@ -169,10 +177,51 @@ impl Engine {
         let calc_changed =
             settings.method != self.settings.method || settings.school != self.settings.school;
         let loc_changed = location_key(&settings) != location_key(&self.settings);
+        let tone_changed = settings.alarm_sound != self.settings.alarm_sound;
         self.settings = settings;
         if calc_changed || loc_changed {
             self.reset_schedule();
         }
+        if tone_changed {
+            let tone = self
+                .settings
+                .alarm_sound
+                .as_ref()
+                .map(|name| self.cache_dir.join(name));
+            self.sound.load(tone);
+        }
+        let _ = settings_io::save(&self.app, &self.settings);
+        self.dirty = true;
+    }
+
+    /// Copies a user-chosen audio file into the app config dir and makes it
+    /// the alarm tone. Validation (extension/size/decodable) happens in the
+    /// command layer.
+    pub fn set_alarm_tone(&mut self, source: PathBuf, extension: &str) {
+        let dest = self.cache_dir.join(format!("alarm-tone.{extension}"));
+        // Drop any previous custom tone file first.
+        if let Ok(entries) = std::fs::read_dir(&self.cache_dir) {
+            for entry in entries.flatten() {
+                let name = entry.file_name();
+                let name = name.to_string_lossy();
+                if name.starts_with("alarm-tone.") && name != format!("alarm-tone.{extension}") {
+                    let _ = std::fs::remove_file(entry.path());
+                }
+            }
+        }
+        if std::fs::copy(&source, &dest).is_ok() {
+            self.settings.alarm_sound = Some(format!("alarm-tone.{extension}"));
+            self.sound.load(Some(dest));
+            let _ = settings_io::save(&self.app, &self.settings);
+        }
+        self.dirty = true;
+    }
+
+    pub fn reset_alarm_tone(&mut self) {
+        if let Some(name) = self.settings.alarm_sound.take() {
+            let _ = std::fs::remove_file(self.cache_dir.join(name));
+        }
+        self.sound.load(None);
         let _ = settings_io::save(&self.app, &self.settings);
         self.dirty = true;
     }

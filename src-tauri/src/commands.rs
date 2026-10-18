@@ -1,6 +1,7 @@
 //! Tauri IPC commands. Every mutating command returns a fresh `AppStateDto`
 //! so the frontend can apply it without waiting for the next engine tick.
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 use chrono::Utc;
@@ -145,4 +146,47 @@ pub fn alarm_dismiss(shared: State<'_, SharedEngine>) -> AppStateDto {
 #[tauri::command]
 pub fn test_sound(shared: State<'_, SharedEngine>) {
     with_engine(&shared, |engine| engine.test_sound());
+}
+
+/// Makes a user-picked audio file the alarm tone: validates it, copies it
+/// into the app config dir (so it survives reboots and file moves) and
+/// switches the audio thread to it.
+#[tauri::command]
+pub fn set_alarm_tone(shared: State<'_, SharedEngine>, path: String) -> Result<AppStateDto, String> {
+    let source = PathBuf::from(&path);
+    let extension = source
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase())
+        .ok_or_else(|| "file has no extension".to_string())?;
+    if !matches!(extension.as_str(), "mp3" | "wav" | "ogg" | "oga" | "flac") {
+        return Err(format!(
+            "unsupported format .{extension} — use mp3, wav, ogg or flac"
+        ));
+    }
+    let meta = std::fs::metadata(&source).map_err(|e| format!("can't read file: {e}"))?;
+    if meta.len() > 20 * 1024 * 1024 {
+        return Err("file is larger than 20 MB".to_string());
+    }
+    if !crate::sound::is_decodable(&source) {
+        return Err(
+            "couldn't decode this file as audio — try mp3, wav, ogg or flac".to_string(),
+        );
+    }
+
+    let dto = with_engine(&shared, |engine| {
+        engine.set_alarm_tone(source, &extension);
+        engine.tick();
+        engine.snapshot()
+    });
+    Ok(dto)
+}
+
+#[tauri::command]
+pub fn reset_alarm_tone(shared: State<'_, SharedEngine>) -> AppStateDto {
+    with_engine(&shared, |engine| {
+        engine.reset_alarm_tone();
+        engine.tick();
+        engine.snapshot()
+    })
 }

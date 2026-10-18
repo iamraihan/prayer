@@ -25,6 +25,7 @@ pub const BASE: &str = "https://api.aladhan.com/v1";
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)] // `code`/`status` are only deserialized for debugging
 pub struct Envelope<D> {
     #[serde(default)]
     pub code: i32,

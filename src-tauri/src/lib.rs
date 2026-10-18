@@ -43,6 +43,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         .on_window_event(|window, event| {
             // Closing the main window hides it — the app keeps running in the
             // tray so alarms still fire. Quit via the tray menu.
@@ -85,6 +86,8 @@ pub fn run() {
             commands::alarm_snooze,
             commands::alarm_dismiss,
             commands::test_sound,
+            commands::set_alarm_tone,
+            commands::reset_alarm_tone,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

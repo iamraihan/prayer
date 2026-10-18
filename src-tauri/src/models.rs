@@ -97,6 +97,9 @@ pub struct Settings {
     pub notifications_enabled: bool,
     pub sound_enabled: bool,
     pub sound_volume: f32,
+    /// File name of a custom alarm tone inside the app config dir
+    /// (e.g. "alarm-tone.mp3"); `None` = built-in chime.
+    pub alarm_sound: Option<String>,
     pub popup_enabled: bool,
     pub pre_end_warning_enabled: bool,
     pub pre_end_warning_minutes: u32,
@@ -113,6 +116,7 @@ impl Default for Settings {
             notifications_enabled: true,
             sound_enabled: true,
             sound_volume: 0.8,
+            alarm_sound: None,
             popup_enabled: true,
             pre_end_warning_enabled: true,
             pre_end_warning_minutes: 10,

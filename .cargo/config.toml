@@ -1,0 +1,5 @@
+# Keep this project's multi-GB build artifacts off the nearly-full C: drive.
+# NOTE: deleting this file makes cargo build into src-tauri/target on C:
+# again — the system drive is critically short on space.
+[build]
+target-dir = "E:/cargo-target/prayer"

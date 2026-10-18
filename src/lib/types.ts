@@ -47,6 +47,8 @@ export interface Settings {
   soundEnabled: boolean;
   /** 0.0 – 1.0 */
   soundVolume: number;
+  /** Custom alarm tone file name inside the app config dir; null = built-in chime. */
+  alarmSound: string | null;
   popupEnabled: boolean;
   preEndWarningEnabled: boolean;
   preEndWarningMinutes: number;

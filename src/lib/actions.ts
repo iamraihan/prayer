@@ -46,3 +46,12 @@ export function previewLocation(req: PreviewRequest): Promise<LocationPreview> {
 export function testSound(): Promise<void> {
   return api.testSound();
 }
+
+/** Picks a custom alarm tone; the file is validated + persisted by Rust. */
+export async function setAlarmTone(path: string): Promise<void> {
+  apply(await api.setAlarmTone(path));
+}
+
+export async function resetAlarmTone(): Promise<void> {
+  apply(await api.resetAlarmTone());
+}

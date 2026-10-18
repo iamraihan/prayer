@@ -27,7 +27,10 @@ For each prayer (Fajr, Dhuhr, Asr, Maghrib, Isha) the scheduler plans:
 Each alarm shows **all three channels** (each can be toggled in Settings):
 
 1. a system notification (Windows/macOS notification center, Ubuntu daemon),
-2. a looping chime sound (auto-stops after 2 minutes if unanswered),
+2. a looping alarm sound — the built-in chime, or your own audio file
+   (Settings → **Alarm tone → Choose file…**, mp3/wav/ogg/flac up to 20 MB;
+   the file is copied into the app's data folder so it persists) — it
+   auto-stops after 2 minutes if unanswered,
 3. a small always-on-top popup with the actions below.
 
 From the popup, the in-app banner, or the tray menu you can:

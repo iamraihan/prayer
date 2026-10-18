@@ -40,4 +40,9 @@ export const api = {
   alarmDismiss: (): Promise<AppState> => invoke("alarm_dismiss"),
 
   testSound: (): Promise<void> => invoke("test_sound"),
+
+  setAlarmTone: (path: string): Promise<AppState> =>
+    invoke("set_alarm_tone", { path }),
+
+  resetAlarmTone: (): Promise<AppState> => invoke("reset_alarm_tone"),
 };

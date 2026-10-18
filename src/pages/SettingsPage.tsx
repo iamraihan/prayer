@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { MapPin, RotateCcw, Save, Volume2 } from "lucide-react";
+import { FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Toggle } from "../components/ui/Toggle";
 import { NumberField, SelectField, SliderField } from "../components/ui/fields";
 import { SetupWizard } from "../components/SetupWizard";
 import { useAppState } from "../store/useAppStore";
-import { testSound, updateSettings } from "../lib/actions";
+import {
+  resetAlarmTone,
+  setAlarmTone,
+  testSound,
+  updateSettings,
+} from "../lib/actions";
 import { METHODS } from "../lib/methods";
 import { PRAYERS, PRAYER_LABELS, type Settings } from "../lib/types";
 import { cn } from "../lib/cn";
@@ -21,6 +27,8 @@ export function SettingsPage() {
   const [draft, setDraft] = useState<Settings | null>(settings);
   const [saving, setSaving] = useState(false);
   const [changingLocation, setChangingLocation] = useState(false);
+  const [toneBusy, setToneBusy] = useState(false);
+  const [toneError, setToneError] = useState<string | null>(null);
 
   // Re-seed the draft whenever the backend pushes a different settings object
   // while the draft is unchanged (e.g. after location change).
@@ -64,6 +72,36 @@ export function SettingsPage() {
       await updateSettings(draft);
     } finally {
       setSaving(false);
+    }
+  }
+
+  // The tone applies immediately (file operation), outside the draft/Save flow.
+  async function chooseTone() {
+    setToneError(null);
+    try {
+      const picked = await open({
+        multiple: false,
+        filters: [{ name: "Audio", extensions: ["mp3", "wav", "ogg", "flac"] }],
+      });
+      if (typeof picked !== "string" || !picked) return;
+      setToneBusy(true);
+      await setAlarmTone(picked);
+    } catch (e) {
+      setToneError(String(e));
+    } finally {
+      setToneBusy(false);
+    }
+  }
+
+  async function useDefaultTone() {
+    setToneError(null);
+    setToneBusy(true);
+    try {
+      await resetAlarmTone();
+    } catch (e) {
+      setToneError(String(e));
+    } finally {
+      setToneBusy(false);
     }
   }
 
@@ -161,6 +199,35 @@ export function SettingsPage() {
               onChange={(v) => patch({ soundEnabled: v })}
             />
           </Row>
+          <Row
+            label="Alarm tone"
+            hint={
+              settings.alarmSound
+                ? `Custom — ${settings.alarmSound} (applies instantly)`
+                : "Default chime"
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Button size="sm" disabled={toneBusy} onClick={() => void chooseTone()}>
+                <FolderOpen className="h-3.5 w-3.5" /> Choose file…
+              </Button>
+              {settings.alarmSound && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={toneBusy}
+                  onClick={() => void useDefaultTone()}
+                >
+                  <Undo2 className="h-3.5 w-3.5" /> Default
+                </Button>
+              )}
+            </div>
+          </Row>
+          {toneError && (
+            <p className="-mt-2 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-xs text-red-300">
+              {toneError}
+            </p>
+          )}
           <Row label="Alarm popup" hint="Small always-on-top window">
             <Toggle
               checked={draft.popupEnabled}
