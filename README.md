@@ -1,5 +1,9 @@
 # Prayer Times
 
+[![CI](https://github.com/iamraihan/prayer/actions/workflows/ci.yml/badge.svg)](https://github.com/iamraihan/prayer/actions/workflows/ci.yml)
+[![Release](https://github.com/iamraihan/prayer/actions/workflows/release.yml/badge.svg)](https://github.com/iamraihan/prayer/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A cross-platform (Windows, macOS, Ubuntu/Linux) prayer-times app built with
 Tauri 2, using the [Aladhan API](https://aladhan.com/prayer-times-api).
 
@@ -12,6 +16,31 @@ Tauri 2, using the [Aladhan API](https://aladhan.com/prayer-times-api).
   school; a live preview is fetched before anything is saved.
 - **Offline-friendly** — each month's timetable is cached on disk
   (one API call per month in the happy path).
+- **In-app auto-updates** — the app checks for updates on launch and from
+  Settings; see below.
+
+## Install
+
+Grab the latest installer for your OS from the
+[Releases page](https://github.com/iamraihan/prayer/releases/latest):
+
+| OS            | File to download |
+| ------------- | ---------------- |
+| Windows       | `Prayer Times_x.y.z_x64-setup.exe` (recommended — supports in-app updates) or the `.msi` |
+| macOS         | `_aarch64.dmg` (Apple Silicon) or `_x86_64.dmg` (Intel) |
+| Ubuntu/Linux  | the `.AppImage` (supports in-app updates), or `.deb` / `.rpm` |
+
+## Auto-updates
+
+The app checks for updates on every launch and on demand from
+**Settings → Updates**.
+
+- **Windows and Linux (AppImage)**: updates download and install inside the
+  app, which then restarts into the new version — no manual download.
+- **macOS**: the app detects updates and links to the release page (silent
+  self-updates on macOS require an Apple Developer ID certificate).
+- Updates are cryptographically signed — the app refuses anything not
+  signed with the maintainer's key.
 
 ## Alarm behavior
 
@@ -140,7 +169,12 @@ Notes:
   `pnpm tauri build --bundles nsis` (or `msi`, `dmg`, `deb`, `appimage`).
 - **Releasing a new version**: bump `version` in **all three** places —
   `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json` —
-  then build.
+  commit, then `git tag vX.Y.Z && git push origin main --tags`. GitHub
+  Actions (`.github/workflows/release.yml`) builds all three platforms and
+  publishes the release with the signed update files automatically; the
+  updater signing key lives at `~/.tauri/prayer-times.key` (the
+  `TAURI_SIGNING_PRIVATE_KEY` secret holds its contents). **Back that key
+  up** — losing it means existing installs can never auto-update again.
 - **Custom app icon** (replaces the placeholder):
   `pnpm tauri icon path/to/icon.png` regenerates all sizes in
   `src-tauri/icons/`, then rebuild.

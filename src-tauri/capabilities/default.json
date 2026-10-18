@@ -3,5 +3,11 @@
   "identifier": "default",
   "description": "Default capability for the main and alarm windows",
   "windows": ["main", "alarm"],
-  "permissions": ["core:default", "dialog:default", "opener:default"]
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "opener:default",
+    "updater:default",
+    "process:allow-restart"
+  ]
 }
