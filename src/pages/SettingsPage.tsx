@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
+import { ExternalLink, FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Toggle } from "../components/ui/Toggle";
@@ -377,6 +378,30 @@ export function SettingsPage() {
             );
           })}
         </ul>
+      </Card>
+
+      <Card title="About">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-400">
+            Developed by <span className="font-medium text-slate-200">Raihan Ali</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void openUrl("https://github.com/iamRaihan")}
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> GitHub
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void openUrl("https://raihanali.com")}
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> raihanali.com
+            </Button>
+          </div>
+        </div>
       </Card>
 
       {changingLocation && (

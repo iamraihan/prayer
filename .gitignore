@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Machine-specific: redirects build output to E: on the dev machine
+.cargo/config.toml
