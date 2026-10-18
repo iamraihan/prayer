@@ -1,0 +1,4 @@
+# Every file needs Raihan's review before it lands on main.
+# The ruleset's "require review from Code Owners" rule reads this file - without
+# it, that rule matches nothing and approval is never actually demanded.
+*       @iamraihan
