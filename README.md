@@ -167,14 +167,9 @@ Notes:
   delete that file.
 - Build only one installer type to save time:
   `pnpm tauri build --bundles nsis` (or `msi`, `dmg`, `deb`, `appimage`).
-- **Releasing a new version**: bump `version` in **all three** places —
-  `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json` —
-  commit, then `git tag vX.Y.Z && git push origin main --tags`. GitHub
-  Actions (`.github/workflows/release.yml`) builds all three platforms and
-  publishes the release with the signed update files automatically; the
-  updater signing key lives at `~/.tauri/prayer-times.key` (the
-  `TAURI_SIGNING_PRIVATE_KEY` secret holds its contents). **Back that key
-  up** — losing it means existing installs can never auto-update again.
+- **Releasing a new version**: see [RELEASING.md](RELEASING.md) — bump the
+  version in three files, push, then tag `vX.Y.Z`; GitHub Actions builds all
+  three platforms and publishes the release with signed update files.
 - **Custom app icon** (replaces the placeholder):
   `pnpm tauri icon path/to/icon.png` regenerates all sizes in
   `src-tauri/icons/`, then rebuild.
