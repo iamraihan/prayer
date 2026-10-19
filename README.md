@@ -1,7 +1,7 @@
 # Prayer Times
 
-[![CI](https://github.com/iamraihan/prayer/actions/workflows/ci.yml/badge.svg)](https://github.com/iamraihan/prayer/actions/workflows/ci.yml)
-[![Release](https://github.com/iamraihan/prayer/actions/workflows/release.yml/badge.svg)](https://github.com/iamraihan/prayer/actions/workflows/release.yml)
+[![CI](https://github.com/iamraihan/prayer-times/actions/workflows/ci.yml/badge.svg)](https://github.com/iamraihan/prayer-times/actions/workflows/ci.yml)
+[![Release](https://github.com/iamraihan/prayer-times/actions/workflows/release.yml/badge.svg)](https://github.com/iamraihan/prayer-times/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A cross-platform (Windows, macOS, Ubuntu/Linux) prayer-times app built with
@@ -22,7 +22,7 @@ Tauri 2, using the [Aladhan API](https://aladhan.com/prayer-times-api).
 ## Install
 
 Grab the latest installer for your OS from the
-[Releases page](https://github.com/iamraihan/prayer/releases/latest):
+[Releases page](https://github.com/iamraihan/prayer-times/releases/latest):
 
 | OS            | File to download |
 | ------------- | ---------------- |

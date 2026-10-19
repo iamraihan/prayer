@@ -4,7 +4,7 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
-export const RELEASES_URL = "https://github.com/iamraihan/prayer/releases/latest";
+export const RELEASES_URL = "https://github.com/iamraihan/prayer-times/releases/latest";
 
 /**
  * Silent in-place updates on macOS require an Apple Developer ID-signed

@@ -42,7 +42,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYzM0I5NjkzREM5RDNGMzkKUldRNVA1M2NrNVk3ODZzamUreG9uYkdXdWpYUThwOGM5d3R0Rnk1cURLOU11enhQRytmbEhHRzAK",
       "endpoints": [
-        "https://github.com/iamraihan/prayer/releases/latest/download/latest.json"
+        "https://github.com/iamraihan/prayer-times/releases/latest/download/latest.json"
       ]
     }
   }
