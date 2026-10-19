@@ -15,9 +15,13 @@ export interface ToastData {
  * and stays click-through; only the toast itself catches clicks.
  */
 export function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }) {
-  // Ref so a new `onDismiss` identity from re-renders doesn't restart the timer.
+  // Keep the latest callback without making it a timer dep (a new identity
+  // from parent re-renders must not restart the countdown). Written in an
+  // effect, never during render — declared first so it runs before the timer.
   const dismissRef = useRef(onDismiss);
-  dismissRef.current = onDismiss;
+  useEffect(() => {
+    dismissRef.current = onDismiss;
+  });
 
   useEffect(() => {
     const t = setTimeout(() => dismissRef.current(), toast.kind === "error" ? 6000 : 3000);
