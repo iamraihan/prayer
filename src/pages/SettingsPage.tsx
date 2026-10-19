@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Download, ExternalLink, FolderOpen, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
+import { Check, Download, ExternalLink, FolderOpen, Loader2, MapPin, RotateCcw, Save, Undo2, Volume2 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { Toast, type ToastData } from "../components/ui/Toast";
 import { Toggle } from "../components/ui/Toggle";
 import { NumberField, SelectField, SliderField } from "../components/ui/fields";
 import { SetupWizard } from "../components/SetupWizard";
@@ -30,7 +31,8 @@ export function SettingsPage() {
   const state = useAppState();
   const settings = state?.settings ?? null;
   const [draft, setDraft] = useState<Settings | null>(settings);
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [toast, setToast] = useState<ToastData | null>(null);
   const [changingLocation, setChangingLocation] = useState(false);
   const [toneBusy, setToneBusy] = useState(false);
   const [toneError, setToneError] = useState<string | null>(null);
@@ -101,11 +103,19 @@ export function SettingsPage() {
 
   async function save() {
     if (!draft) return;
-    setSaving(true);
+    setSaveState("saving");
     try {
       await updateSettings(draft);
-    } finally {
-      setSaving(false);
+      setSaveState("saved");
+      setToast({ kind: "success", message: "Settings saved" });
+      // Revert the button label once the confirmation has been seen.
+      window.setTimeout(
+        () => setSaveState((s) => (s === "saved" ? "idle" : s)),
+        2500,
+      );
+    } catch (e) {
+      setSaveState("idle");
+      setToast({ kind: "error", message: `Couldn't save settings: ${String(e)}` });
     }
   }
 
@@ -146,13 +156,24 @@ export function SettingsPage() {
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            disabled={!dirty || saving}
+            disabled={!dirty || saveState === "saving"}
             onClick={() => setDraft(settings)}
           >
             <RotateCcw className="h-4 w-4" /> Reset
           </Button>
-          <Button variant="primary" disabled={!dirty || saving} onClick={() => void save()}>
-            <Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
+          <Button
+            variant="primary"
+            disabled={!dirty || saveState === "saving"}
+            onClick={() => void save()}
+          >
+            {saveState === "saving" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : saveState === "saved" ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}{" "}
+            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Save changes"}
           </Button>
         </div>
       </div>
@@ -461,7 +482,7 @@ export function SettingsPage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => void openUrl("https://github.com/iamRaihan")}
+              onClick={() => void openUrl("https://github.com/iamraihan")}
             >
               <ExternalLink className="h-3.5 w-3.5" /> GitHub
             </Button>
@@ -481,6 +502,8 @@ export function SettingsPage() {
           <SetupWizard onFinished={() => setChangingLocation(false)} />
         </div>
       )}
+
+      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }
