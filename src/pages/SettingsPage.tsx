@@ -77,6 +77,11 @@ export function SettingsPage() {
     [draft, settings],
   );
 
+  // A new edit while the "Saved" confirmation is showing invalidates it.
+  useEffect(() => {
+    if (dirty && saveState === "saved") setSaveState("idle");
+  }, [dirty, saveState]);
+
   if (!draft || !settings) {
     return (
       <div className="p-6 text-sm text-slate-400">Loading settings…</div>
