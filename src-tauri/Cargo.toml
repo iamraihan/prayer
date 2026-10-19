@@ -2,7 +2,7 @@
 name = "prayer-times"
 version = "0.2.0"
 description = "Prayer times with tray status, alarms and reminders"
-authors = ["ORANGEBD"]
+authors = ["Raihan Ali"]
 license = "MIT"
 edition = "2021"
 
