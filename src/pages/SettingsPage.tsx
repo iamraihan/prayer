@@ -468,7 +468,7 @@ export function SettingsPage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => void openUrl("https://raihanali.com")}
+              onClick={() => void openUrl("https://raihanali.com/prayer-times")}
             >
               <ExternalLink className="h-3.5 w-3.5" /> raihanali.com
             </Button>
